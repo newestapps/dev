@@ -1,7 +1,7 @@
 {
-    "name": "newestapps/package-kit",
+    "name": "newestapps/dev",
     "version": "1.0.0",
-    "description": "Newestapps Package development kit",
+    "description": "Dev Tools for building awesome packages and projects",
     "homepage": "https://newestapps.com.br",
     "license": "proprietary",
     "minimum-stability": "dev",
@@ -12,36 +12,41 @@
             "email": "rodrigotbrun@gmail.com",
             "homepage": "http://rodrigobrun.com.br",
             "role": "Developer"
-        },
-        {
-            "name": "Anderson Altissimo",
-            "email": "ander.altissimo@gmail.com",
-            "homepage": "http://andersonaltissimo.com.br",
-            "role": "Developer"
         }
     ],
     "support": {
-        "email" : "contato@newestapps.com.br"
+        "email": "contato@newestapps.com.br"
     },
     "autoload": {
         "psr-4": {
-            "Newestapps\\Package\\": "./src/"
+            "Newestapps\\Dev\\": "./src/"
         },
-        "files": [],
+        "files": [
+            "Helpers/Documents/Brazil/personal_documents.php",
+            "Helpers/Geolocation/geolocation.php"
+        ],
         "classmap": [
             "database/migrations",
-            "database/seeds"
+            "database/seeds",
+            "libraries/"
         ]
     },
     "require": {
         "php": ">=7.1.0",
-        "laravel/framework": "5.5.*",
-        "newestapps/core": "dev-master"
+        "laravel/framework": ">=5.5.32"
+    },
+    "require-dev": {
+        "barryvdh/laravel-ide-helper": "2.4.*",
+        "barryvdh/laravel-debugbar": "v3.1.0",
+        "phpunit/phpunit": "7.0.2",
+        "emanueleminotto/faker-placehold-it-provider": "1.0.0",
+        "frequenc1/newage-ipsum": "dev-master",
+        "swekaj/cron-expression-generator": "1.0.0"
     },
     "extra": {
         "laravel": {
             "providers": [
-                "Newestapps\\Package\\Providers\\PackageServiceProvicer"
+                "Newestapps\\Dev\\Providers\\DevServiceProvider"
             ],
             "aliases": {
             }
