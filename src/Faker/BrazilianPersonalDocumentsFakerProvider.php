@@ -8,7 +8,7 @@ namespace Newestapps\Dev\Faker;
 
 use Faker\Provider\Base;
 
-class BrazilianPersonalDocumentsFakerProviderProvider extends Base
+class BrazilianPersonalDocumentsFakerProvider extends Base
 {
 
     public function randomCPF($formatted = false)
