@@ -26,8 +26,6 @@
             "Helpers/Geolocation/geolocation.php"
         ],
         "classmap": [
-            "database/migrations",
-            "database/seeds",
             "libraries/"
         ]
     },
