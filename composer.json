@@ -31,9 +31,7 @@
     },
     "require": {
         "php": ">=7.1.0",
-        "laravel/framework": ">=5.5.32"
-    },
-    "require-dev": {
+        "laravel/framework": ">=5.5.32",
         "barryvdh/laravel-ide-helper": "2.4.*",
         "barryvdh/laravel-debugbar": "v3.1.0",
         "phpunit/phpunit": "7.0.2",
