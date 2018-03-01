@@ -33,9 +33,9 @@ class DevServiceProvider extends ServiceProvider
     {
         $this->app->singleton(FakerGenerator::class, function () {
             $faker = FakerFactory::create('pt_BR');
-            $faker->addProvider(new \EmanueleMinotto\Faker\PlaceholdItProvider($faker));
-            $faker->addProvider(new \NewAgeIpsum\NewAgeProvider($faker));
-            $faker->addProvider(new \CronExpressionGenerator\FakerProvider($faker));
+            $faker->addProvider(new EmanueleMinotto\Faker\PlaceholdItProvider($faker));
+            $faker->addProvider(new NewAgeIpsum\NewAgeProvider($faker));
+            $faker->addProvider(new CronExpressionGenerator\FakerProvider($faker));
             $faker->addProvider(new BrazilianPersonalDocumentsFakerProviderProvider($faker));
             $faker->addProvider(new GeolocationFakerProvider($faker));
 
