@@ -22,8 +22,8 @@
             "Newestapps\\Dev\\": "./src/"
         },
         "files": [
-            "Helpers/Documents/Brazil/personal_documents.php",
-            "Helpers/Geolocation/geolocation.php"
+            "./src/Helpers/Documents/Brazil/personal_documents.php",
+            "./src/Helpers/Geolocation/geolocation.php"
         ],
         "classmap": [
             "libraries/"
