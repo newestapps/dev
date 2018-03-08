@@ -7,6 +7,7 @@
 namespace Newestapps\Dev\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Database\Eloquent\Factory;
 use Faker\Generator as FakerGenerator;
 use Faker\Factory as FakerFactory;
 use Newestapps\Dev\Faker\BrazilianPersonalDocumentsFakerProvider;
@@ -33,6 +34,7 @@ class DevServiceProvider extends ServiceProvider
     {
         $this->app->singleton(FakerGenerator::class, function () {
             $faker = FakerFactory::create('pt_BR');
+
             $faker->addProvider(new \EmanueleMinotto\Faker\PlaceholdItProvider($faker));
             $faker->addProvider(new \NewAgeIpsum\NewAgeProvider($faker));
             $faker->addProvider(new \CronExpressionGenerator\FakerProvider($faker));
