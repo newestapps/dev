@@ -11,7 +11,7 @@ if (!function_exists('nwdev_mod')) {
 }
 
 if (!function_exists('nwdev_randomCPF')) {
-    function nwdev_randomCPF($compontos)
+    function nwdev_randomCPF($compontos = false)
     {
         $n1 = rand(0, 9);
         $n2 = rand(0, 9);
@@ -44,7 +44,7 @@ if (!function_exists('nwdev_randomCPF')) {
 }
 
 if (!function_exists('nwdev_randomCNPJ')) {
-    function nwdev_randomCNPJ($compontos)
+    function nwdev_randomCNPJ($compontos = false)
     {
         $n1 = rand(0, 9);
         $n2 = rand(0, 9);
