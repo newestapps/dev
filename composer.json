@@ -38,7 +38,8 @@
         "phpunit/phpunit": "7.0.2",
         "emanueleminotto/faker-placehold-it-provider": "1.0.0",
         "frequenc1/newage-ipsum": "dev-master",
-        "swekaj/cron-expression-generator": "1.0.0"
+        "swekaj/cron-expression-generator": "1.0.0",
+        "mustache/mustache": "^2.12"
     },
     "extra": {
         "laravel": {

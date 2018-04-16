@@ -10,8 +10,11 @@ use Illuminate\Support\ServiceProvider;
 use Illuminate\Database\Eloquent\Factory;
 use Faker\Generator as FakerGenerator;
 use Faker\Factory as FakerFactory;
+use Newestapps\Dev\Commands\GeneratorCommand;
+use Newestapps\Dev\Facades\StringView;
 use Newestapps\Dev\Faker\BrazilianPersonalDocumentsFakerProvider;
 use Newestapps\Dev\Faker\GeolocationFakerProvider;
+use sngrl\StringBladeCompiler\StringBladeCompilerServiceProvider;
 
 class DevServiceProvider extends ServiceProvider
 {
@@ -42,6 +45,21 @@ class DevServiceProvider extends ServiceProvider
             $faker->addProvider(new GeolocationFakerProvider($faker));
 
             return $faker;
+        });
+
+        $this->commands([
+            GeneratorCommand::class,
+        ]);
+
+
+        $this->app->bind('stringview', 'sngrl\StringBladeCompiler\StringView');
+
+        /*
+       * This removes the need to add a facade in the config\app
+       */
+        $this->app->booting(function () {
+            $loader = \Illuminate\Foundation\AliasLoader::getInstance();
+            $loader->alias('StringView', StringView::class);
         });
     }
 
