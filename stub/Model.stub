@@ -1,0 +1,32 @@
+<?php
+
+namespace {{namespace}};
+
+use Illuminate\Database\Eloquent\Model;
+
+/**
+ * {{modelClass}}
+ */
+class {{className}} extends Model
+{
+    {{#usingCustomTableName}}
+
+    protected $table = '{{tableName}}';
+    {{/usingCustomTableName}}
+
+    protected $fillable = [
+    {{#modelColumnsFillable}}
+        '{{name}}',
+    {{/modelColumnsFillable}}
+    ];
+
+    protected $casts = [
+    ];
+
+    protected $hidden = [
+    {{#modelColumnsHidden}}
+        '{{name}}',
+    {{/modelColumnsHidden}}
+    ];
+
+}

@@ -17,7 +17,7 @@ class GeneratorCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'nw:make {generator} {model}';
+    protected $signature = 'nw:make {generator} {model} {--namespace=} {--tableName=}';
 
     /**
      * The console command description.
@@ -50,7 +50,7 @@ class GeneratorCommand extends Command
             'domain',
         ])) {
             $fullGenerator = "__make_{$generator}";
-            if(method_exists($this, $fullGenerator)){
+            if (method_exists($this, $fullGenerator)) {
                 $this->$fullGenerator($model);
             }
         } else {
@@ -64,26 +64,58 @@ class GeneratorCommand extends Command
         $modelClassBaseName = $model;
         $modelClass = "App\\{$model}";
 
-        $modelExists = class_exists($modelClass);
-        $modelInstance = ($modelExists) ? (new $modelClass()) : (null);
-
         $this->variables['model'] = $model;
         $this->variables['modelClassBaseName'] = $modelClassBaseName;
         $this->variables['modelClass'] = $modelClass;
-        $this->variables['modelExists'] = $modelExists;
-        $this->variables['modelInstance'] = $modelInstance;
         $this->variables['varName'] = camel_case(snake_case($model));
         $this->variables['pluralVarName'] = str_plural($this->variables['varName']);
+        $this->variables['tableName'] = (empty($this->option('tableName'))) ? (snake_case(str_plural($model))) : ($this->option('tableName'));
+        $this->variables['usingCustomTableName'] = !empty($this->option('tableName'));
+        $this->variables['tableExists'] = false;
 
-        $table = $this->variables['modelInstance']->getTable();
-        $columns = \DB::select(\DB::raw('SHOW COLUMNS FROM '.$table));
+        $modelExists = class_exists($modelClass);
+        $columns = [];
+        $modelInstance = null;
+        if ($modelExists) {
+            $modelInstance = ($modelExists) ? (new $modelClass()) : (null);
 
-        $modelColumns = [];
-        foreach ($columns as $c) {
-            $modelColumns[]['name'] = $c->Field;
+            if ($modelInstance !== null) {
+                $table = $modelInstance->getTable();
+                try {
+                    $columns = \DB::select(\DB::raw('SHOW COLUMNS FROM '.$table));
+                    $this->variables['tableExists'] = true;
+                } catch (\Exception $e) {
+                }
+            }
+
+        } else {
+            try {
+                $columns = \DB::select(\DB::raw('SHOW COLUMNS FROM '.$this->variables['tableName']));
+                $this->variables['tableExists'] = true;
+            } catch (\Exception $e) {
+            }
         }
 
+        $modelColumns = [];
+        $modelColumnsFillable = [];
+        $modelColumnsHidden = [];
+        foreach ($columns as $c) {
+            $modelColumns[]['name'] = $c->Field;
+
+            if (!in_array($c->Field, ['id', 'own_id', 'uuid', 'created_at', 'updated_at', 'deleted_at'])) {
+                $modelColumnsFillable[]['name'] = $c->Field;
+            }
+
+            if (in_array($c->Field, ['password', 'access_token', 'refresh_token', 'client_secret'])) {
+                $modelColumnsHidden[]['name'] = $c->Field;
+            }
+        }
+
+        $this->variables['modelExists'] = $modelExists;
         $this->variables['modelColumns'] = $modelColumns;
+        $this->variables['modelColumnsFillable'] = $modelColumnsFillable;
+        $this->variables['modelColumnsHidden'] = $modelColumnsHidden;
+        $this->variables['modelInstance'] = $modelInstance;
 
         // Run generators
         $genChars = preg_split('//', $generator, -1, PREG_SPLIT_NO_EMPTY);
@@ -111,6 +143,14 @@ class GeneratorCommand extends Command
     private function namespace($namespace = 'App\\')
     {
         $this->variables['namespace'] = $namespace;
+    }
+
+    private function getNamespaceOption($prefix = '\\', $suffix = '')
+    {
+        $namespaceOption = $this->option('namespace');
+        $namespaceOption = (!empty(trim($namespaceOption))) ? ($prefix.ucfirst($namespaceOption).$suffix) : ('');
+
+        return $namespaceOption;
     }
 
     private function checkExistentFile($file, $hint)
@@ -167,21 +207,38 @@ class GeneratorCommand extends Command
         $this->generate('Transformer.stub', app_path('Transformers'));
     }
 
+    /** MODEL */
+    private function _m($model, $modelClass, $modelExists, $modelInstance)
+    {
+        $this->namespace('App');
+        $this->className(str_singular($model), '');
+
+        $this->generate('Model.stub', app_path(''));
+
+        if ($this->variables['tableExists']) {
+            \Artisan::call('ide-helper:models', [
+                '-W' => true,
+                '-n' => true,
+            ]);
+        }
+    }
+
     /** CONTROLLER */
     private function _c($model, $modelClass, $modelExists, $modelInstance)
     {
-        $this->namespace('App\\Http\\Controllers');
+        $this->namespace('App\\Http\\Controllers'.$this->getNamespaceOption('\\'));
         $this->className($model, 'Controller');
 
-        $this->generate('Controller.stub', app_path('Http/Controllers'), [
+        $this->generate('Controller.stub', app_path('Http/Controllers'.$this->getNamespaceOption('/')), [
             'repositoryBaseClassName' => "{$model}Repository",
             'transformerBaseClassName' => "{$model}Transformer",
             'requestBaseNameClass' => "{$model}Request",
+            'responseBaseNameClass' => "{$model}Response",
         ]);
 
         $this->output->block("Controller Routes Setup Instructions ---------------------------------------------------".
             "\n  - Add this line to your routes file");
-        $this->warn("  Route::resource('{$this->variables['pluralVarName']}', '{$this->variables['className']}');");
+        $this->warn("  Route::resource('{$this->variables['pluralVarName']}', '{$this->getNamespaceOption('', '\\\\')}{$this->variables['className']}');");
         $this->line('');
     }
 
@@ -206,9 +263,11 @@ class GeneratorCommand extends Command
             'repositoryClassName' => $repositoryClassName,
         ]);
 
-        $this->output->block("Repository Setup Instructions ----------------------------------------------------------".
-            "\n  - Add this line to your AppServiceProvider (register method)");
-        $this->warn("  \$this->app->bind(\\{$repositoryClassName}::class, \\{$this->variables['namespace']}\\{$this->variables['className']}::class);");
+        $this->output->block("Repository Setup Instructions----------------------------------------------------------".
+            "\n - Add this line to your AppServiceProvider(register method)");
+        $this->warn("  \$this->app->bind(\\{$repositoryClassName}::class, \\{
+        $this->variables['namespace']}\\{
+        $this->variables['className']}::class);");
         $this->line('');
     }
 
@@ -216,7 +275,8 @@ class GeneratorCommand extends Command
     /// PRESETS
     ////////////////////////////////////////////////////////////////////////////////
 
-    private function __make_domain($model){
+    private function __make_domain($model)
+    {
         $this->runStand('t', $model);
         $this->runStand('r', $model);
         $this->runStand('c', $model);
