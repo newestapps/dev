@@ -1,0 +1,19 @@
+<?php
+
+namespace {{namespace}};
+
+use Prettus\Repository\Contracts\RepositoryInterface;
+
+/**
+ * Interface {{className}}.
+ *
+ * @method pushCriteria($app);
+ *
+ * @package namespace {{namespace}};
+ */
+interface {{className}} extends RepositoryInterface
+{
+
+    //
+
+}

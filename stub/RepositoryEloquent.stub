@@ -1,0 +1,60 @@
+<?php
+
+namespace {{namespace}};
+
+use Prettus\Repository\Criteria\RequestCriteria;
+use Prettus\Validator\Contracts\ValidatorInterface;
+use Newestapps\Core\Repositories\CoreBaseRepository;
+use {{repositoryClassName}};
+use {{modelClass}};
+
+/**
+ * Class {{className}}.
+ *
+ * @package namespace {{namespace}};
+ */
+class {{className}} extends CoreBaseRepository implements {{repositoryModelName}}
+{
+
+    /**
+     * Validation rules for this repository
+     *
+     * @return array
+     */
+    function getRules()
+    {
+        return [
+            ValidatorInterface::RULE_CREATE => [
+            {{#modelColumns}}
+                '{{name}}' => 'nullable',
+            {{/modelColumns}}
+            ],
+
+            ValidatorInterface::RULE_UPDATE => [
+            {{#modelColumns}}
+                '{{name}}' => 'nullable',
+            {{/modelColumns}}
+            ],
+        ];
+    }
+
+    /**
+     * Specify Model class name
+     *
+     * @return string
+     */
+    public function model()
+    {
+        return {{modelClassBaseName}}::class;
+    }
+
+    /**
+     * Boot up the repository, pushing criteria
+     * @throws \Prettus\Repository\Exceptions\RepositoryException
+     */
+    public function boot()
+    {
+        $this->pushCriteria(app(RequestCriteria::class));
+    }
+
+}

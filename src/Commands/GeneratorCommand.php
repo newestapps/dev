@@ -46,16 +46,34 @@ class GeneratorCommand extends Command
         $generator = $this->argument('generator');
         $model = $this->argument('model');
 
+        if (in_array($generator, [
+            'domain',
+        ])) {
+            $fullGenerator = "__make_{$generator}";
+            if(method_exists($this, $fullGenerator)){
+                $this->$fullGenerator($model);
+            }
+        } else {
+            $this->runStand($generator, $model);
+        }
+    }
+
+    public function runStand($generator, $model)
+    {
         $model = ucfirst($model);
+        $modelClassBaseName = $model;
         $modelClass = "App\\{$model}";
 
         $modelExists = class_exists($modelClass);
         $modelInstance = ($modelExists) ? (new $modelClass()) : (null);
 
         $this->variables['model'] = $model;
+        $this->variables['modelClassBaseName'] = $modelClassBaseName;
         $this->variables['modelClass'] = $modelClass;
         $this->variables['modelExists'] = $modelExists;
         $this->variables['modelInstance'] = $modelInstance;
+        $this->variables['varName'] = camel_case(snake_case($model));
+        $this->variables['pluralVarName'] = str_plural($this->variables['varName']);
 
         $table = $this->variables['modelInstance']->getTable();
         $columns = \DB::select(\DB::raw('SHOW COLUMNS FROM '.$table));
@@ -95,8 +113,27 @@ class GeneratorCommand extends Command
         $this->variables['namespace'] = $namespace;
     }
 
+    private function checkExistentFile($file, $hint)
+    {
+        if (file_exists($file)) {
+            $override = $this->confirm("The file you're about to generate already exists! Override existent file? ({$hint})",
+                false);
+
+            return $override;
+        }
+
+        return true;
+    }
+
     private function generate($stub, $saveTo, array $data = [])
     {
+        $filename = $this->variables['className'].'.php';
+        $file = $saveTo.'/'.$filename;
+
+        if (!$this->checkExistentFile($file, $filename)) {
+            return;
+        }
+
         $stubFile = __DIR__.'/../../stub/'.$stub;
         if (file_exists($stubFile)) {
             $template = file_get_contents($stubFile);
@@ -109,8 +146,6 @@ class GeneratorCommand extends Command
             } catch (\Exception $e) {
             }
 
-            $filename = $this->variables['className'].'.php';
-            $file = $saveTo.'/'.$filename;
             file_put_contents($file, $rendered);
 
             if (file_exists($file)) {
@@ -132,5 +167,58 @@ class GeneratorCommand extends Command
         $this->generate('Transformer.stub', app_path('Transformers'));
     }
 
+    /** CONTROLLER */
+    private function _c($model, $modelClass, $modelExists, $modelInstance)
+    {
+        $this->namespace('App\\Http\\Controllers');
+        $this->className($model, 'Controller');
 
+        $this->generate('Controller.stub', app_path('Http/Controllers'), [
+            'repositoryBaseClassName' => "{$model}Repository",
+            'transformerBaseClassName' => "{$model}Transformer",
+            'requestBaseNameClass' => "{$model}Request",
+        ]);
+
+        $this->output->block("Controller Routes Setup Instructions ---------------------------------------------------".
+            "\n  - Add this line to your routes file");
+        $this->warn("  Route::resource('{$this->variables['pluralVarName']}', '{$this->variables['className']}');");
+        $this->line('');
+    }
+
+    /** REPOSITORY */
+    private function _r($model, $modelClass, $modelExists, $modelInstance)
+    {
+        $this->namespace('App\\Repositories');
+        $this->className($model, 'Repository');
+
+        $repositoryModelName = $this->variables['className'];
+        $repositoryClassName = $this->variables['namespace'].'\\'.$this->variables['className'];
+
+        $this->generate('Repository.stub', app_path('Repositories'));
+
+        ////////
+
+        $this->namespace('App\\Repositories\\DataSource');
+        $this->className($model, 'RepositoryEloquent');
+
+        $this->generate('RepositoryEloquent.stub', app_path('Repositories/DataSource'), [
+            'repositoryModelName' => $repositoryModelName,
+            'repositoryClassName' => $repositoryClassName,
+        ]);
+
+        $this->output->block("Repository Setup Instructions ----------------------------------------------------------".
+            "\n  - Add this line to your AppServiceProvider (register method)");
+        $this->warn("  \$this->app->bind(\\{$repositoryClassName}::class, \\{$this->variables['namespace']}\\{$this->variables['className']}::class);");
+        $this->line('');
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////
+    /// PRESETS
+    ////////////////////////////////////////////////////////////////////////////////
+
+    private function __make_domain($model){
+        $this->runStand('t', $model);
+        $this->runStand('r', $model);
+        $this->runStand('c', $model);
+    }
 }

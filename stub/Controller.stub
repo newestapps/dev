@@ -1,0 +1,186 @@
+<?php
+
+namespace {{namespace}};
+
+use App\Repositories\{{repositoryBaseClassName}};
+use App\Transformers\{{transformerBaseClassName}};
+use Illuminate\Http\Request;
+use Prettus\Validator\LaravelValidator;
+use Prettus\Validator\Contracts\ValidatorInterface;
+use Prettus\Validator\Exceptions\ValidatorException;
+use Newestapps\Core\Http\Controllers\ManagedController;
+use Newestapps\Core\Http\Resources\ApiResponse;
+use Newestapps\Core\Facades\Newestapps;
+
+class {{className}} extends ManagedController
+{
+
+    /**
+     * @var {{repositoryBaseClassName}}
+     */
+    protected $repository;
+
+    /**
+     * @var LaravelValidator
+     */
+    private $validator;
+
+    protected $transformer = {{transformerBaseClassName}}::class;
+
+    /**
+     * RolesController constructor.
+     *
+     * @param {{repositoryBaseClassName}} $repository
+     * @param LaravelValidator $validator
+     */
+    public function __construct({{repositoryBaseClassName}} $repository, LaravelValidator $validator)
+    {
+        parent::__construct();
+
+        $this->repository = $repository;
+        $this->validator = $validator;
+    }
+
+    /**
+     * Display a listing of the resource.
+     *
+     * @param Request $request
+     * @return ApiResponse|\Illuminate\View\View|\Illuminate\Contracts\View\Factory
+     */
+    public function index(Request $request)
+    {
+        $this->repository->pushCriteria(app('Prettus\Repository\Criteria\RequestCriteria'));
+        ${{pluralVarName}} = $this->repository
+            ->paginate($request->get('limit', 15));
+
+        if ($request->wantsJson()) {
+            return $this->collectionResponse(${{pluralVarName}});
+        }
+
+        return view('some-awesome-index-view')
+            ->with('{{varName}}s', ${{pluralVarName}});
+    }
+
+    /**
+     * Display the specified resource.
+     *
+     * @param Request $request
+     * @param int $id
+     *
+     * @return ApiResponse|\Illuminate\View\View|\Illuminate\Contracts\View\Factory
+     */
+    public function show(Request $request, $id)
+    {
+        ${{varName}} = $this->repository->find($id);
+        if (empty(${{varName}})) {
+            abort(404);
+        }
+
+        if ($request->wantsJson()) {
+            return $this->itemResponse(${{varName}});
+        }
+
+        return view('some-awesome-show-view')
+            ->with('{{varName}}', ${{varName}});
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     *
+     * @param Request $request
+     *
+     * @return ApiResponse|\Newestapps\Core\Http\Resources\ApiErrorResponse|\Illuminate\Routing\Redirector|\Illuminate\Http\RedirectResponse
+     */
+    public function store(Request $request)
+    {
+        try {
+            $this->validator->with($request->all())->passesOrFail(ValidatorInterface::RULE_CREATE);
+            ${{varName}} = $this->repository->create($request->all());
+
+            $message = '{{model}} created.';
+
+            if ($request->wantsJson()) {
+                return $this->itemResponse(${{varName}}, $this->transformer, $message);
+            }
+
+            return redirect()->back()->with('message', $message);
+
+        } catch (ValidatorException $e) {
+
+            if ($request->wantsJson()) {
+                return Newestapps::apiErrorResponse($e->getMessageBag());
+            }
+
+            return redirect()->back()->withErrors($e->getMessageBag())->withInput();
+        }
+    }
+
+    /**
+     * Show the form for editing the specified resource.
+     *
+     * @param int $id
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function edit($id)
+    {
+        ${{varName}} = $this->repository->find($id);
+
+        return view('{{varName}}.edit')
+            ->with('{{varName}}', ${{varName}});
+    }
+
+    /**
+     * Update the specified resource in storage.
+     *
+     * @param Request $request
+     * @param string $id
+     *
+     * @return ApiResponse|\Newestapps\Core\Http\Resources\ApiErrorResponse|\Illuminate\Routing\Redirector|\Illuminate\Http\RedirectResponse
+     */
+    public function update(Request $request, $id)
+    {
+        try {
+            $this->validator->with($request->all())->passesOrFail(ValidatorInterface::RULE_UPDATE);
+            ${{varName}} = $this->repository->update($request->all(), $id);
+
+            $message = '{{model}} updated.';
+
+            if ($request->wantsJson()) {
+                return $this->itemResponse(${{varName}});
+            }
+
+            return redirect()->back()->with('message', $message);
+
+        } catch (ValidatorException $e) {
+
+            if ($request->wantsJson()) {
+                return Newestapps::apiErrorResponse($e->getMessageBag());
+            }
+
+            return redirect()->back()->withErrors($e->getMessageBag())->withInput();
+        }
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     *
+     * @param Request $request
+     * @param int $id
+     *
+     * @return ApiResponse|\Illuminate\Routing\Redirector|\Illuminate\Http\RedirectResponse
+     */
+    public function destroy(Request $request, $id)
+    {
+        $deleted = $this->repository->delete($id);
+
+        $message = '{{model}} deleted.';
+
+        if ($request->wantsJson()) {
+            return Newestapps::apiResponse($deleted, $message);
+        }
+
+        return redirect()->back()->with('message', $message);
+    }
+
+}
