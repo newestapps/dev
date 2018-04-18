@@ -265,9 +265,7 @@ class GeneratorCommand extends Command
 
         $this->output->block("Repository Setup Instructions----------------------------------------------------------".
             "\n - Add this line to your AppServiceProvider(register method)");
-        $this->warn("  \$this->app->bind(\\{$repositoryClassName}::class, \\{
-        $this->variables['namespace']}\\{
-        $this->variables['className']}::class);");
+        $this->warn("  \$this->app->bind(\\{$repositoryClassName}::class, \\{$this->variables['namespace']}\\{$this->variables['className']}::class);");
         $this->line('');
     }
 
